@@ -1,0 +1,45 @@
+@page "/predict"
+
+@using Microsoft.AspNetCore.Components.Forms
+
+<h3>Image Upload</h3>
+
+<EditForm Model="@formModel" OnValidSubmit="HandleValidSubmit" FormName="predict">
+    <InputFile OnChange="HandleFileSelected" />
+    <button type="submit">Submit</button>
+</EditForm>
+
+@code {
+    private IBrowserFile selectedFile;
+    private MultipartFormDataContent formModel = new MultipartFormDataContent();
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+
+        // Limpiar el contenido anterior para evitar duplicados
+        formModel = new MultipartFormDataContent();
+
+        // Añadir el archivo seleccionado al formulario
+        var fileContent = new StreamContent(selectedFile.OpenReadStream(maxAllowedSize: 1024 * 1024 * 15)); // Limita el tamaño a 15MB
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
+
+        formModel.Add(fileContent, "file", selectedFile.Name);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        using (var httpClient = new HttpClient())
+        {
+            var response = await httpClient.PostAsync("http://localhost:5000/v1/predict", formModel);
+            if (response.IsSuccessStatusCode)
+            {
+                // Manejar la respuesta exitosa aquí
+            }
+            else
+            {
+                // Manejar errores aquí
+            }
+        }
+    }
+}
